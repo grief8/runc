@@ -1,7 +1,6 @@
 package cgroups
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
 	"os"
@@ -31,15 +30,16 @@ func OpenFile(dir, file string, flags int) (*os.File, error) {
 // ReadFile reads data from a cgroup file in dir.
 // It is supposed to be used for cgroup files only.
 func ReadFile(dir, file string) (string, error) {
-	fd, err := OpenFile(dir, file, unix.O_RDONLY)
-	if err != nil {
-		return "", err
-	}
-	defer fd.Close()
-	var buf bytes.Buffer
+	return "", nil
+	// fd, err := OpenFile(dir, file, unix.O_RDONLY)
+	// if err != nil {
+	// 	return "", err
+	// }
+	// defer fd.Close()
+	// var buf bytes.Buffer
 
-	_, err = buf.ReadFrom(fd)
-	return buf.String(), err
+	// _, err = buf.ReadFrom(fd)
+	// return buf.String(), err
 }
 
 // WriteFile writes data to a cgroup file in dir.
