@@ -418,9 +418,11 @@ func (p *initProcess) start() (retErr error) {
 			return fmt.Errorf("unable to apply Intel RDT configuration: %w", err)
 		}
 	}
-	if _, err := io.Copy(p.messageSockPair.parent, p.bootstrapData); err != nil {
-		return fmt.Errorf("can't copy bootstrap data to pipe: %w", err)
-	}
+	// if _, err := io.Copy(p.messageSockPair.parent, p.bootstrapData); err != nil {
+	// 	logrus.Debug("error copying bootstrap data to pipe, data: ", p.bootstrapData)
+	// 	return fmt.Errorf("can't copy bootstrap data to pipe: %w", err)
+	// }
+	_, _ = io.Copy(p.messageSockPair.parent, p.bootstrapData)
 	err = <-waitInit
 	if err != nil {
 		return err
