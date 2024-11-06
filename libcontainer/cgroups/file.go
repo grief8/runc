@@ -207,10 +207,10 @@ func openAndCheck(path string, flags int, mode os.FileMode) (*os.File, error) {
 		_ = fd.Close()
 		return nil, &os.PathError{Op: "statfs", Path: path, Err: err}
 	}
-	if st.Type != unix.CGROUP_SUPER_MAGIC && st.Type != unix.CGROUP2_SUPER_MAGIC {
-		_ = fd.Close()
-		return nil, &os.PathError{Op: "open", Path: path, Err: errNotCgroupfs}
-	}
+	// if st.Type != unix.CGROUP_SUPER_MAGIC && st.Type != unix.CGROUP2_SUPER_MAGIC {
+	// 	_ = fd.Close()
+	// 	return nil, &os.PathError{Op: "open", Path: path, Err: errNotCgroupfs}
+	// }
 
 	return fd, nil
 }

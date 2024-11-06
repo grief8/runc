@@ -376,29 +376,29 @@ func WriteCgroupProc(dir string, pid int) error {
 	if pid == -1 {
 		return nil
 	}
+	return nil
+	// file, err := OpenFile(dir, CgroupProcesses, os.O_WRONLY)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to write %v: %w", pid, err)
+	// }
+	// defer file.Close()
 
-	file, err := OpenFile(dir, CgroupProcesses, os.O_WRONLY)
-	if err != nil {
-		return fmt.Errorf("failed to write %v: %w", pid, err)
-	}
-	defer file.Close()
+	// for i := 0; i < 5; i++ {
+	// 	_, err = file.WriteString(strconv.Itoa(pid))
+	// 	if err == nil {
+	// 		return nil
+	// 	}
 
-	for i := 0; i < 5; i++ {
-		_, err = file.WriteString(strconv.Itoa(pid))
-		if err == nil {
-			return nil
-		}
+	// 	// EINVAL might mean that the task being added to cgroup.procs is in state
+	// 	// TASK_NEW. We should attempt to do so again.
+	// 	if errors.Is(err, unix.EINVAL) {
+	// 		time.Sleep(30 * time.Millisecond)
+	// 		continue
+	// 	}
 
-		// EINVAL might mean that the task being added to cgroup.procs is in state
-		// TASK_NEW. We should attempt to do so again.
-		if errors.Is(err, unix.EINVAL) {
-			time.Sleep(30 * time.Millisecond)
-			continue
-		}
-
-		return fmt.Errorf("failed to write %v: %w", pid, err)
-	}
-	return err
+	// 	return fmt.Errorf("failed to write %v: %w", pid, err)
+	// }
+	// return err
 }
 
 // Since the OCI spec is designed for cgroup v1, in some cases

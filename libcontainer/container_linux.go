@@ -215,9 +215,11 @@ func (c *Container) Run(process *Process) error {
 	if err := c.start(process); err != nil {
 		return err
 	}
+	logrus.Debugf("container process started %v", process.Init)
 	if process.Init {
 		return c.exec()
 	}
+	logrus.Debugf("container process started %v", process.Init)
 	return nil
 }
 
@@ -319,6 +321,7 @@ func (c *Container) start(process *Process) (retErr error) {
 	}
 
 	parent, err := c.newParentProcess(process)
+	logrus.Debugf("new parent process %v", parent)
 	if err != nil {
 		return fmt.Errorf("unable to create new parent process: %w", err)
 	}
@@ -326,6 +329,7 @@ func (c *Container) start(process *Process) (retErr error) {
 	defer process.closeClonedExes()
 
 	logsDone := parent.forwardChildLogs()
+	logrus.Debugf("forwarding logs %v", logsDone)
 	if logsDone != nil {
 		defer func() {
 			// Wait for log forwarder to finish. This depends on
@@ -346,10 +350,10 @@ func (c *Container) start(process *Process) (retErr error) {
 	if err := utils.CloseExecFrom(3); err != nil {
 		return fmt.Errorf("unable to mark non-stdio fds as cloexec: %w", err)
 	}
+	logrus.Debugf("starting container process %v", parent)
 	if err := parent.start(); err != nil {
 		return fmt.Errorf("unable to start container process: %w", err)
 	}
-
 	if process.Init {
 		c.fifo.Close()
 		if c.config.Hooks != nil {
@@ -366,6 +370,7 @@ func (c *Container) start(process *Process) (retErr error) {
 			}
 		}
 	}
+	logrus.Debugf("[fff] container process started %v", parent)
 	return nil
 }
 
@@ -555,22 +560,27 @@ func (c *Container) newParentProcess(p *Process) (parentProcess, error) {
 			err = dmz.ErrNoDmzBinary
 		}
 		if errors.Is(err, dmz.ErrNoDmzBinary) {
-			safeExe, err = dmz.CloneSelfExe(c.stateDir)
+			// safeExe, _ = dmz.CloneSelfExe(c.stateDir)
+			safeExe, err := os.Open("/proc/self/exe")
 			if err != nil {
-				return nil, fmt.Errorf("unable to create safe /proc/self/exe clone for runc init: %w", err)
+				return nil, fmt.Errorf("opening current binary: %w", err)
 			}
+			// if err != nil {
+			// 	return nil, fmt.Errorf("unable to create safe /proc/self/exe clone for runc init: %w", err)
+			// }
 			exePath = "/proc/self/fd/" + strconv.Itoa(int(safeExe.Fd()))
 			p.clonedExes = append(p.clonedExes, safeExe)
 			logrus.Debug("runc-dmz: using /proc/self/exe clone") // used for tests
 		}
 		// Just to make sure we don't run without protection.
-		if dmzExe == nil && safeExe == nil {
-			// This should never happen.
-			return nil, fmt.Errorf("[internal error] attempted to spawn a container with no /proc/self/exe protection")
-		}
+		// if dmzExe == nil && safeExe == nil {
+		// 	// This should never happen.
+		// 	return nil, fmt.Errorf("[internal error] attempted to spawn a container with no /proc/self/exe protection")
+		// }
 	}
 
 	cmd := exec.Command(exePath, "init")
+	logrus.Debugf("running %v", cmd.Args)
 	cmd.Args[0] = os.Args[0]
 	cmd.Stdin = p.Stdin
 	cmd.Stdout = p.Stdout

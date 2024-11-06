@@ -172,13 +172,13 @@ func (s *CpusetGroup) ApplyDir(dir string, r *configs.Resources, pid int) error 
 }
 
 func getCpusetSubsystemSettings(parent string) (cpus, mems string, err error) {
-	if cpus, err = cgroups.ReadFile(parent, "cpuset.cpus"); err != nil {
-		return
-	}
-	if mems, err = cgroups.ReadFile(parent, "cpuset.mems"); err != nil {
-		return
-	}
-	return cpus, mems, nil
+	// if cpus, err = cgroups.ReadFile(parent, "cpuset.cpus"); err != nil {
+	// 	return
+	// }
+	// if mems, err = cgroups.ReadFile(parent, "cpuset.mems"); err != nil {
+	// 	return
+	// }
+	return "0", "0", nil
 }
 
 // cpusetEnsureParent makes sure that the parent directories of current

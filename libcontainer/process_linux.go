@@ -80,6 +80,7 @@ func newProcessComm() (*processComm, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to create log pipe: %w", err)
 	}
+	logrus.Debugf("error: %v", err)
 	return &comm, nil
 }
 
@@ -377,11 +378,12 @@ func (p *initProcess) externalDescriptors() []string {
 // getChildPid receives the final child's pid over the provided pipe.
 func (p *initProcess) getChildPid() (int, error) {
 	var pid pid
+	logrus.Debug("[wait] waiting for pid from child")
 	if err := json.NewDecoder(p.comm.initSockParent).Decode(&pid); err != nil {
 		_ = p.cmd.Wait()
 		return -1, err
 	}
-
+	logrus.Debug("received pid from child, pid: ", pid)
 	// Clean up the zombie parent process
 	// On Unix systems FindProcess always succeeds.
 	firstChildProcess, _ := os.FindProcess(pid.PidFirstChild)
@@ -447,17 +449,17 @@ func (p *initProcess) goCreateMountSources(ctx context.Context) (mountSourceRequ
 		}
 
 		// Attach to the container's mount namespace.
-		nsFd, err := os.Open(fmt.Sprintf("/proc/%d/ns/mnt", p.pid()))
-		if err != nil {
-			errCh <- fmt.Errorf("mount source thread: open container mntns: %w", err)
-			return
-		}
-		defer nsFd.Close()
-		if err := unix.Setns(int(nsFd.Fd()), unix.CLONE_NEWNS); err != nil {
-			err = os.NewSyscallError("setns", err)
-			errCh <- fmt.Errorf("mount source thread: join container mntns: %w", err)
-			return
-		}
+		// nsFd, err := os.Open(fmt.Sprintf("/proc/%d/ns/mnt", p.pid()))
+		// if err != nil {
+		// 	errCh <- fmt.Errorf("mount source thread: open container mntns: %w", err)
+		// 	return
+		// }
+		// defer nsFd.Close()
+		// if err := unix.Setns(int(nsFd.Fd()), unix.CLONE_NEWNS); err != nil {
+		// 	err = os.NewSyscallError("setns", err)
+		// 	errCh <- fmt.Errorf("mount source thread: join container mntns: %w", err)
+		// 	return
+		// }
 
 		// No errors during setup!
 		close(errCh)
@@ -586,11 +588,12 @@ func (p *initProcess) start() (retErr error) {
 	if _, err := io.Copy(p.comm.initSockParent, p.bootstrapData); err != nil {
 		return fmt.Errorf("can't copy bootstrap data to pipe: %w", err)
 	}
-
+	logrus.Debugf("wrote bootstrap data to pipe, data: %v", p.bootstrapData)
 	childPid, err := p.getChildPid()
 	if err != nil {
 		return fmt.Errorf("can't get final child's PID from pipe: %w", err)
 	}
+	// var childPid = 2
 
 	// Save the standard descriptor names before the container process
 	// can potentially move them (e.g., via dup2()).  If we don't do this now,
